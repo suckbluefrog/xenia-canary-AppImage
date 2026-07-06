@@ -2,11 +2,17 @@
 
 set -eu
 
-ARCH="$(uname -m)"
+ARCH="${ARCH:-$(uname -m)}"
+case "$ARCH" in
+	amd64) ARCH=x86_64 ;;
+	arm64) ARCH=aarch64 ;;
+esac
 export ARCH
 export OUTPATH=./dist
 export ADD_HOOKS="self-updater.bg.hook"
-export UPINFO="gh-releases-zsync|${GITHUB_REPOSITORY%/*}|${GITHUB_REPOSITORY#*/}|latest|*$ARCH.AppImage.zsync"
+if [ -n "${GITHUB_REPOSITORY:-}" ]; then
+	export UPINFO="gh-releases-zsync|${GITHUB_REPOSITORY%/*}|${GITHUB_REPOSITORY#*/}|latest|*$ARCH.AppImage.zsync"
+fi
 export ICON=https://raw.githubusercontent.com/xenia-canary/xenia-canary/refs/heads/canary_experimental/assets/icon/256.png
 export DEPLOY_VULKAN=1
 
