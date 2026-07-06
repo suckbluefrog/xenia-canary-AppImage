@@ -10,6 +10,7 @@ esac
 
 APPIMAGE_ROOT="$(pwd)"
 BINARY="https://github.com/xenia-canary/xenia-canary-releases/releases/latest/download/xenia_canary_linux.tar.xz"
+BINARY_FALLBACK="https://github.com/xenia-canary/xenia-canary-releases/releases/latest/download/xenia_canary_linux.tar_.xz"
 XENIA_SOURCE_URL="${XENIA_SOURCE_URL:-https://github.com/xenia-canary/xenia-canary.git}"
 XENIA_CANARY_REF="${XENIA_CANARY_REF:-9478cda5d643f31ce5eddaa3a698282887515439}"
 XENIA_BUILD_FROM_SOURCE="${XENIA_BUILD_FROM_SOURCE:-0}"
@@ -50,15 +51,19 @@ else
 fi
 
 download_prebuilt() {
-	echo "Downloading '$BINARY'..."
-	echo "---------------------------------------------------------------"
-	if ! wget --retry-connrefused --tries=30 "$BINARY" -O /tmp/xenia.tar.xz 2>/tmp/download.log; then
+	for binary_url in "$BINARY" "$BINARY_FALLBACK"; do
+		echo "Downloading '$binary_url'..."
+		echo "---------------------------------------------------------------"
+		if wget --retry-connrefused --tries=30 "$binary_url" -O /tmp/xenia.tar.xz 2>/tmp/download.log; then
+			awk -F'/' '/Location:/{print $(NF-1); exit}' /tmp/download.log > ~/version
+			tar xvf /tmp/xenia.tar.xz
+			chmod +x ./build/bin/Linux/Release/xenia_canary
+			return 0
+		fi
 		cat /tmp/download.log
-		exit 1
-	fi
-	awk -F'/' '/Location:/{print $(NF-1); exit}' /tmp/download.log > ~/version
-	tar xvf /tmp/xenia.tar.xz
-	chmod +x ./build/bin/Linux/Release/xenia_canary
+	done
+
+	exit 1
 }
 
 generate_version_header() {
