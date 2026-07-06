@@ -4,14 +4,14 @@
 
 [![GitHub Downloads](https://img.shields.io/github/downloads/pkgforge-dev/xenia-canary-AppImage/total?logo=github&label=GitHub%20Downloads)](https://github.com/pkgforge-dev/xenia-canary-AppImage/releases/latest)
 [![CI Build Status](https://github.com//pkgforge-dev/xenia-canary-AppImage/actions/workflows/appimage.yml/badge.svg)](https://github.com/pkgforge-dev/xenia-canary-AppImage/releases/latest)
-[![Latest Stable Release](https://img.shields.io/github/v/release/pkgforge-dev/xenia-canary-AppImage)](https://github.com/pkgforge-dev/xenia-canary-AppImage/releases/latest)
+[![Latest Release](https://img.shields.io/github/v/release/pkgforge-dev/xenia-canary-AppImage)](https://github.com/pkgforge-dev/xenia-canary-AppImage/releases/latest)
 
 <p align="center">
   <img src="https://github.com/xenia-canary/xenia-canary/blob/canary_experimental/assets/icon/128.png" width="128" />
 </p>
 
 
-| Latest Stable Release | Upstream URL |
+| Latest Release | Upstream URL |
 | :---: | :---: |
 | [Click here](https://github.com/pkgforge-dev/xenia-canary-AppImage/releases/latest) | [Click here](https://github.com/xenia-canary/xenia-canary) |
 
@@ -19,9 +19,13 @@
 
 ---
 
-AppImage made using [sharun](https://github.com/VHSgunzo/sharun) and its wrapper [quick-sharun](https://github.com/pkgforge-dev/Anylinux-AppImages/blob/main/useful-tools/quick-sharun.sh), which makes it extremely easy to turn any binary into a portable package reliably without using containers or similar tricks. 
+AppImage made using [sharun](https://github.com/VHSgunzo/sharun) and its wrapper [quick-sharun](https://github.com/pkgforge-dev/Anylinux-AppImages/blob/main/useful-tools/quick-sharun.sh), which makes it extremely easy to turn any binary into a portable package reliably without using containers or similar tricks.
 
-**This AppImage bundles everything and it should work on any Linux distro, including old and musl-based ones.**
+**The ARM64 AppImage is experimental/debug-focused.** It is not a production-quality sealed runtime, and it intentionally relies on the host Mesa/Vulkan graphics stack via `USE_HOST_MESA_DRIVERS=1`.
+
+This avoids bundling and validating one GPU driver stack across Adreno, Mali, RADV, and other ARM64 targets. For a validated target, the runtime image should own the graphics stack and avoid mixing host ICDs with unmatched bundled Mesa/libdrm/LLVM pieces.
+
+The x86_64 AppImage follows the normal portable AppImage packaging model.
 
 This AppImage doesn't require FUSE to run at all, thanks to the [uruntime](https://github.com/VHSgunzo/uruntime).
 

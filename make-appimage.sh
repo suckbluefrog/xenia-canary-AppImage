@@ -10,6 +10,13 @@ esac
 export ARCH
 export OUTPATH=./dist
 export ADD_HOOKS="self-updater.bg.hook"
+if [ "$ARCH" = "aarch64" ]; then
+	export USE_HOST_MESA_DRIVERS="${USE_HOST_MESA_DRIVERS:-1}"
+	export SHARUN_ALLOW_SYS_VKICD="${SHARUN_ALLOW_SYS_VKICD:-1}"
+	export OUTNAME="${OUTNAME:-xenia-canary-experimental-$ARCH.AppImage}"
+else
+	export DEPLOY_VULKAN="${DEPLOY_VULKAN:-1}"
+fi
 if [ -n "${GITHUB_REPOSITORY:-}" ]; then
 	export UPINFO="gh-releases-zsync|${GITHUB_REPOSITORY%/*}|${GITHUB_REPOSITORY#*/}|latest|*$ARCH.AppImage.zsync"
 fi
@@ -53,33 +60,12 @@ remove_bundled_glibc_core() {
 	done
 }
 
-add_host_vulkan_hook() {
-	mkdir -p ./AppDir/bin
-	cat > ./AppDir/bin/00-host-vulkan-drivers.hook <<'EOF'
-# Prefer host Vulkan ICDs. GPU driver libraries must match the host kernel,
-# firmware, DRM stack, and board setup, especially with external PCIe GPUs.
-if [ -z "${VK_DRIVER_FILES:-}" ] && [ -z "${VK_ICD_FILENAMES:-}" ]; then
-	host_vulkan_icds=""
-	for host_vulkan_icd_dir in \
-		/etc/vulkan/icd.d \
-		/usr/local/share/vulkan/icd.d \
-		/usr/share/vulkan/icd.d \
-		/usr/lib64/vulkan/icd.d \
-		/usr/lib/vulkan/icd.d
-	do
-		[ -d "$host_vulkan_icd_dir" ] || continue
-		for host_vulkan_icd in "$host_vulkan_icd_dir"/*.json; do
-			[ -f "$host_vulkan_icd" ] || continue
-			host_vulkan_icds="${host_vulkan_icds:+$host_vulkan_icds:}$host_vulkan_icd"
-		done
-	done
-
-	if [ -n "$host_vulkan_icds" ]; then
-		export VK_DRIVER_FILES="$host_vulkan_icds"
-		export VK_ICD_FILENAMES="$host_vulkan_icds"
-	fi
-fi
-EOF
+configure_host_mesa_runtime() {
+	mkdir -p ./AppDir
+	{
+		echo 'USE_HOST_MESA_DRIVERS=1'
+		echo 'SHARUN_ALLOW_SYS_VKICD=1'
+	} >> ./AppDir/.env
 }
 
 ALSA_PLUGINS=""
@@ -105,9 +91,11 @@ for plugin in $ALSA_PLUGINS; do
 	cp -a "$plugin" ./AppDir/lib/alsa-lib/
 done
 
-remove_bundled_vulkan_drivers
-remove_bundled_glibc_core
-add_host_vulkan_hook
+if [ "$ARCH" = "aarch64" ]; then
+	remove_bundled_vulkan_drivers
+	remove_bundled_glibc_core
+	configure_host_mesa_runtime
+fi
 
 # Turn AppDir into AppImage
 quick-sharun --make-appimage
