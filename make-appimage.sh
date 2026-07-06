@@ -17,9 +17,14 @@ export ICON=https://raw.githubusercontent.com/xenia-canary/xenia-canary/refs/hea
 export DEPLOY_VULKAN=1
 
 ALSA_PLUGINS=""
+ALSA_PLUGIN_NAMES="
+libasound_module_pcm_pipewire.so
+libasound_module_ctl_pipewire.so
+"
 for plugin_dir in /usr/lib/alsa-lib /usr/lib64/alsa-lib; do
 	[ -d "$plugin_dir" ] || continue
-	for plugin in "$plugin_dir"/libasound_module_*.so; do
+	for plugin_name in $ALSA_PLUGIN_NAMES; do
+		plugin="$plugin_dir/$plugin_name"
 		[ -f "$plugin" ] || continue
 		ALSA_PLUGINS="$ALSA_PLUGINS $plugin"
 	done
