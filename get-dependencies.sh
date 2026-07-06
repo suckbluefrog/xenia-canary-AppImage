@@ -20,6 +20,7 @@ echo "Installing dependencies..."
 echo "---------------------------------------------------------------"
 pacman -Syu --noconfirm \
 	alsa-lib          \
+	alsa-plugins      \
 	base-devel        \
 	clang             \
 	cmake             \
@@ -33,6 +34,8 @@ pacman -Syu --noconfirm \
 	lz4               \
 	ninja             \
 	pkgconf           \
+	pipewire          \
+	pipewire-alsa     \
 	python            \
 	sdl2              \
 	spirv-tools       \

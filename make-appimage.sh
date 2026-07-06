@@ -16,10 +16,23 @@ fi
 export ICON=https://raw.githubusercontent.com/xenia-canary/xenia-canary/refs/heads/canary_experimental/assets/icon/256.png
 export DEPLOY_VULKAN=1
 
+ALSA_PLUGINS=""
+for plugin_dir in /usr/lib/alsa-lib /usr/lib64/alsa-lib; do
+	[ -d "$plugin_dir" ] || continue
+	for plugin in "$plugin_dir"/libasound_module_*.so; do
+		[ -f "$plugin" ] || continue
+		ALSA_PLUGINS="$ALSA_PLUGINS $plugin"
+	done
+done
+
 # ADD LIBRARIES
-quick-sharun ./build/bin/Linux/Release/xenia_canary
+quick-sharun ./build/bin/Linux/Release/xenia_canary $ALSA_PLUGINS
 
 # Additional changes can be done in between here
+mkdir -p ./AppDir/lib/alsa-lib
+for plugin in $ALSA_PLUGINS; do
+	cp -a "$plugin" ./AppDir/lib/alsa-lib/
+done
 
 # Turn AppDir into AppImage
 quick-sharun --make-appimage
