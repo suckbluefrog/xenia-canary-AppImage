@@ -33,6 +33,56 @@ remove_bundled_vulkan_drivers() {
 	done
 }
 
+remove_bundled_glibc_core() {
+	for lib_dir in ./AppDir/lib ./AppDir/lib64 ./AppDir/usr/lib ./AppDir/usr/lib64; do
+		[ -d "$lib_dir" ] || continue
+		find "$lib_dir" -maxdepth 1 \( -type f -o -type l \) \( \
+			-name 'ld-linux*.so*' -o \
+			-name 'libanl.so*' -o \
+			-name 'libBrokenLocale.so*' -o \
+			-name 'libc.so*' -o \
+			-name 'libcrypt.so*' -o \
+			-name 'libdl.so*' -o \
+			-name 'libm.so*' -o \
+			-name 'libnsl.so*' -o \
+			-name 'libpthread.so*' -o \
+			-name 'libresolv.so*' -o \
+			-name 'librt.so*' -o \
+			-name 'libthread_db.so*' -o \
+			-name 'libutil.so*' \
+		\) -print -delete
+	done
+}
+
+add_host_vulkan_hook() {
+	mkdir -p ./AppDir/bin
+	cat > ./AppDir/bin/00-host-vulkan-drivers.hook <<'EOF'
+# Prefer host Vulkan ICDs. GPU driver libraries must match the host kernel,
+# firmware, DRM stack, and board setup, especially with external PCIe GPUs.
+if [ -z "${VK_DRIVER_FILES:-}" ] && [ -z "${VK_ICD_FILENAMES:-}" ]; then
+	host_vulkan_icds=""
+	for host_vulkan_icd_dir in \
+		/etc/vulkan/icd.d \
+		/usr/local/share/vulkan/icd.d \
+		/usr/share/vulkan/icd.d \
+		/usr/lib64/vulkan/icd.d \
+		/usr/lib/vulkan/icd.d
+	do
+		[ -d "$host_vulkan_icd_dir" ] || continue
+		for host_vulkan_icd in "$host_vulkan_icd_dir"/*.json; do
+			[ -f "$host_vulkan_icd" ] || continue
+			host_vulkan_icds="${host_vulkan_icds:+$host_vulkan_icds:}$host_vulkan_icd"
+		done
+	done
+
+	if [ -n "$host_vulkan_icds" ]; then
+		export VK_DRIVER_FILES="$host_vulkan_icds"
+		export VK_ICD_FILENAMES="$host_vulkan_icds"
+	fi
+fi
+EOF
+}
+
 ALSA_PLUGINS=""
 ALSA_PLUGIN_NAMES="
 libasound_module_pcm_pipewire.so
@@ -57,6 +107,8 @@ for plugin in $ALSA_PLUGINS; do
 done
 
 remove_bundled_vulkan_drivers
+remove_bundled_glibc_core
+add_host_vulkan_hook
 
 # Turn AppDir into AppImage
 quick-sharun --make-appimage
