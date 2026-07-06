@@ -37,7 +37,6 @@ remove_bundled_glibc_core() {
 	for lib_dir in ./AppDir/lib ./AppDir/lib64 ./AppDir/usr/lib ./AppDir/usr/lib64; do
 		[ -d "$lib_dir" ] || continue
 		find "$lib_dir" -maxdepth 1 \( -type f -o -type l \) \( \
-			-name 'ld-linux*.so*' -o \
 			-name 'libanl.so*' -o \
 			-name 'libBrokenLocale.so*' -o \
 			-name 'libc.so*' -o \
