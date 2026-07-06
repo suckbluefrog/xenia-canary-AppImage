@@ -14,7 +14,24 @@ if [ -n "${GITHUB_REPOSITORY:-}" ]; then
 	export UPINFO="gh-releases-zsync|${GITHUB_REPOSITORY%/*}|${GITHUB_REPOSITORY#*/}|latest|*$ARCH.AppImage.zsync"
 fi
 export ICON=https://raw.githubusercontent.com/xenia-canary/xenia-canary/refs/heads/canary_experimental/assets/icon/256.png
-export DEPLOY_VULKAN=1
+
+remove_bundled_vulkan_drivers() {
+	for lib_dir in ./AppDir/lib ./AppDir/lib64 ./AppDir/usr/lib ./AppDir/usr/lib64; do
+		[ -d "$lib_dir" ] || continue
+		find "$lib_dir" -maxdepth 1 -type f \( \
+			-name 'libvulkan_*.so*' -o \
+			-name 'libVkLayer_*.so*' \
+		\) -print -delete
+	done
+
+	for data_dir in ./AppDir/share/vulkan ./AppDir/usr/share/vulkan ./AppDir/etc/vulkan ./AppDir/usr/etc/vulkan; do
+		[ -d "$data_dir" ] || continue
+		rm -rf \
+			"$data_dir/icd.d" \
+			"$data_dir/implicit_layer.d" \
+			"$data_dir/explicit_layer.d"
+	done
+}
 
 ALSA_PLUGINS=""
 ALSA_PLUGIN_NAMES="
@@ -38,6 +55,8 @@ mkdir -p ./AppDir/lib/alsa-lib
 for plugin in $ALSA_PLUGINS; do
 	cp -a "$plugin" ./AppDir/lib/alsa-lib/
 done
+
+remove_bundled_vulkan_drivers
 
 # Turn AppDir into AppImage
 quick-sharun --make-appimage
