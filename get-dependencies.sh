@@ -61,7 +61,6 @@ if command -v apt-get >/dev/null 2>&1; then
 		pipewire-alsa \
 		python3 \
 		spirv-tools \
-		vulkan-headers \
 		vulkan-tools \
 		wget \
 		xz-utils \
