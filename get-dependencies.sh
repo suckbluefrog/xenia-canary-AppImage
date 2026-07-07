@@ -16,41 +16,94 @@ XENIA_CANARY_REF="${XENIA_CANARY_REF:-9478cda5d643f31ce5eddaa3a698282887515439}"
 XENIA_BUILD_FROM_SOURCE="${XENIA_BUILD_FROM_SOURCE:-0}"
 PATCH_DIR="${PATCH_DIR:-$APPIMAGE_ROOT/patches/xenia-canary-aarch64}"
 
+as_root() {
+	if [ "$(id -u)" -eq 0 ]; then
+		"$@"
+	else
+		sudo "$@"
+	fi
+}
+
 echo "Installing dependencies..."
 echo "---------------------------------------------------------------"
-pacman -Syu --noconfirm \
-	alsa-lib          \
-	alsa-plugins      \
-	base-devel        \
-	clang             \
-	cmake             \
-	git               \
-	glslang           \
-	gtk3              \
-	libx11            \
-	libxcb            \
-	lld               \
-	llvm              \
-	lz4               \
-	ninja             \
-	pkgconf           \
-	pipewire          \
-	pipewire-alsa     \
-	python            \
-	sdl2              \
-	spirv-tools       \
-	vulkan-headers    \
-	vulkan-icd-loader \
-	wget              \
-	xz                \
-	zlib
+if command -v apt-get >/dev/null 2>&1; then
+	as_root apt-get update
+	as_root env DEBIAN_FRONTEND=noninteractive apt-get -y install \
+		alsa-utils \
+		build-essential \
+		clang \
+		cmake \
+		git \
+		glslang-tools \
+		libasound2-dev \
+		libasound2-plugins \
+		libegl-dev \
+		libfontconfig-dev \
+		libfreetype-dev \
+		libgdk-pixbuf-2.0-0 \
+		libgtk-3-0 \
+		libgtk-3-dev \
+		liblz4-dev \
+		libopengl-dev \
+		libpipewire-0.3-0 \
+		libpulse0 \
+		librsvg2-2 \
+		libsdl2-dev \
+		libvulkan-dev \
+		libx11-dev \
+		libxcb1-dev \
+		libxml2 \
+		lld \
+		llvm \
+		mesa-vulkan-drivers \
+		ninja-build \
+		pkg-config \
+		pipewire-alsa \
+		python3 \
+		spirv-tools \
+		vulkan-headers \
+		vulkan-tools \
+		wget \
+		xz-utils \
+		zlib1g-dev
+elif command -v pacman >/dev/null 2>&1; then
+	pacman -Syu --noconfirm \
+		alsa-lib          \
+		alsa-plugins      \
+		base-devel        \
+		clang             \
+		cmake             \
+		git               \
+		glslang           \
+		gtk3              \
+		libx11            \
+		libxcb            \
+		lld               \
+		llvm              \
+		lz4               \
+		ninja             \
+		pkgconf           \
+		pipewire          \
+		pipewire-alsa     \
+		python            \
+		sdl2              \
+		spirv-tools       \
+		vulkan-headers    \
+		vulkan-icd-loader \
+		wget              \
+		xz                \
+		zlib
 
-echo "Installing debloated packages..."
-echo "---------------------------------------------------------------"
-if command -v get-debloated-pkgs >/dev/null 2>&1; then
-	get-debloated-pkgs --add-mesa gtk3-mini libxml2-mini opus-mini gdk-pixbuf2-mini librsvg-mini
+	echo "Installing debloated packages..."
+	echo "---------------------------------------------------------------"
+	if command -v get-debloated-pkgs >/dev/null 2>&1; then
+		get-debloated-pkgs --add-mesa gtk3-mini libxml2-mini opus-mini gdk-pixbuf2-mini librsvg-mini
+	else
+		pacman -S --noconfirm --needed mesa libxml2 opus gdk-pixbuf2 librsvg
+	fi
 else
-	pacman -S --noconfirm --needed mesa libxml2 opus gdk-pixbuf2 librsvg
+	echo "Unsupported package manager. Need apt-get or pacman." >&2
+	exit 1
 fi
 
 download_prebuilt() {
